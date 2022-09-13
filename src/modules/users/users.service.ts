@@ -14,9 +14,7 @@ import { CreateTokenDto } from "@modules/users/dto/create-token.dto"
 import { UsersTokens } from "@entities/users-tokens.entity"
 import { UpdateTokenDto } from "@modules/users/dto/update-token.dto"
 import { validateUserDto } from "@modules/users/dto/validate-user.dto"
-import { UsersPermissions } from "@entities/users-permissions.entity"
 import { AssignMenuDto } from "@modules/users/dto/assign-menus.dto"
-import { UsersMenus } from "@entities/users-menus.entity"
 import { AssignPermissionDto } from "@modules/users/dto/assign-permission.dto"
 import { UsersGroup } from "@entities/users_group.entity"
 import { CreateUserGroupDto } from "@modules/users/dto/create-usergroups.dto"
@@ -30,10 +28,6 @@ export class UsersService {
 		private userRepository: Repository<Users>,
 		@InjectRepository(UsersTokens)
 		private tokenRepository: Repository<UsersTokens>,
-		@InjectRepository(UsersPermissions)
-		private permissionRepository: Repository<UsersPermissions>,
-		@InjectRepository(UsersMenus)
-		private userMenuRepository: Repository<UsersMenus>,
 		@InjectRepository(UsersGroup)
 		private groupRepository: Repository<UsersGroup>,
 		private dataSource: DataSource
@@ -60,9 +54,7 @@ export class UsersService {
 			user.username = registerDto.username
 			user.password = registerDto.password
 			await user.hashPassword()
-			user.role = null
-			user.group = null // add group
-			user.is_active = false
+			user.is_active = true
 
 			return await this.userRepository.save(user)
 		} catch (e) {
@@ -78,9 +70,6 @@ export class UsersService {
 		const user = await this.userRepository.findOne({
 			where: {
 				username: username
-			},
-			relations: {
-				role: true
 			}
 		})
 
@@ -95,9 +84,6 @@ export class UsersService {
 		const user = await this.userRepository.findOne({
 			where: {
 				id: userId
-			},
-			relations: {
-				role: true
 			}
 		})
 
@@ -112,7 +98,6 @@ export class UsersService {
 		const user = await this.findById(id)
 		user.name = updateDto.name
 		user.username = updateDto.username
-		user.role = updateDto.role
 		user.is_active = updateDto.is_active
 
 		return await this.userRepository.save(user)
@@ -241,77 +226,11 @@ export class UsersService {
 		//3. find userid and update a new password
 	}
 
-	//TODO: insert code verification user after register
-	async saveUserValidateCode(validateDto: validateUserDto) {}
-
-	async userPermissions(userId: string) {
-		try {
-			return await this.permissionRepository.query(
-				`SELECT p.id, p.name, m.meta_title
-						  FROM users_permissions up
-						LEFT JOIN permissions p ON up.permission_id = p.id
-						INNER JOIN menus m ON up.menu_id = m.id
-			          WHERE up.user_id = ?`,
-				[userId]
-			)
-		} catch (e) {
-			this.logger.warn(e.message)
-			return []
-		}
-	}
 
 	async userRemoveToken(refreshToken: string) {
 		const userToken = await this.findRefreshToken(refreshToken)
 
 		return await this.tokenRepository.remove(userToken)
-	}
-
-	//TODO: save user menus
-	async assignPermissionsUser(assignDto: AssignPermissionDto) {
-
-		const menu = await this.permissionRepository.query(
-			`SELECT m.meta_title FROM menus m WHERE m.id = ?`,
-			 [assignDto.menu_id]
-		)
-
-		const pers = await this.permissionRepository.query(
-			`SELECT p.name FROM permissions p WHERE p.id = ?`,
-			 [assignDto.permission_id]
-		)
-
-		const permission = new UsersPermissions()
-		permission.user = assignDto.user_id
-		permission.menu = assignDto.menu_id
-		permission.permission = assignDto.permission_id
-		permission.assignAccess(menu.meta_title, pers.name)
-
-		return await this.permissionRepository.save(permission)
-	}
-
-	//TODO: save user menus
-	async assignMenuUser(assignDto: AssignMenuDto) {
-		const menu = new UsersMenus()
-		menu.user = assignDto.user_id
-		menu.menu = assignDto.menu_id
-
-		return await this.userMenuRepository.save(menu)
-	}
-
-	//TODO: create a user group
-	async createUserGroup(usergroupDto: CreateUserGroupDto){
-		const usergroup = new UsersGroup()
-		usergroup.name = usergroupDto.name
-		usergroup.description = usergroup.description
-
-		return await this.groupRepository.save(usergroup)
-	}
-
-	async getUserGroup(){
-		return await this.groupRepository.find({
-			order: {
-				name: 'ASC'
-			}
-		})
 	}
 
 }

@@ -83,7 +83,7 @@ export class AuthController {
 			maxAge: 24 * 60 * 60 * 1000,
 		})
 
-		const { role, ...result } = user
+		const { ...result } = user
 
 		res.json({
 			statusCode: HttpStatus.OK,

@@ -41,11 +41,6 @@ export class Products {
 	})
 	slug: string;
 
-	@Column({
-		type: "decimal"
-	})
-	views: number;
-
 	@ManyToOne(() => Users)
 	@JoinColumn({
 		name: "create_by",

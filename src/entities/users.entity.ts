@@ -2,13 +2,9 @@ import {
 	Column,
 	CreateDateColumn,
 	Entity,
-	JoinColumn,
-	ManyToOne,
 	PrimaryGeneratedColumn
 } from "typeorm"
 import * as bcrypt from "bcrypt"
-import { Roles } from "@entities/roles.entity"
-import { UsersGroup } from "@entities/users_group.entity";
 
 @Entity()
 export class Users {
@@ -39,22 +35,6 @@ export class Users {
 		default: false
 	})
 	is_active: boolean
-
-	@ManyToOne(() => Roles)
-	@JoinColumn({
-		name: "role_id",
-		referencedColumnName: "id",
-		foreignKeyConstraintName: "fk_users_role"
-	})
-	role: string
-
-	@ManyToOne(() => UsersGroup)
-	@JoinColumn({
-		name: 'user_group',
-		referencedColumnName: 'id',
-		foreignKeyConstraintName: 'fk_users_group'
-	})
-	group: string
 
 	@CreateDateColumn({
 		type: "timestamp",

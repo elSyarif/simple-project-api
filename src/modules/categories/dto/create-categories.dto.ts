@@ -6,11 +6,16 @@ export class CreateCategoriesDto {
     @IsNotEmpty()
     name:string
 
-    @ApiProperty()
+    @ApiProperty({ enum: ['PUBLISH', 'DRAFT']})
     @IsNotEmpty()
-    status:string
+    status:STATUS
 
     @ApiProperty()
     @IsNotEmpty()
     description: string
+}
+
+export enum STATUS{
+	PUBLISH = 'PUBLISH',
+	DRAFT = 'DRAFT'
 }

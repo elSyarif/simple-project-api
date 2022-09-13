@@ -48,7 +48,6 @@ export class AuthService {
 		const payload = {
 			id: user.id,
 			username: user.username,
-			role: user.role.name
 		}
 
 		return {
@@ -85,15 +84,11 @@ export class AuthService {
 			throw new BadRequestException("Refresh Token expire")
 		}
 
-		const { role, ...user } = await this.userService.findById(decode.id)
-		const permission = await this.getPermissions(user.id)
-
-		const rol: any = role
+		const { ...user } = await this.userService.findById(decode.id)
 
 		const payload = {
 			id: user.id,
 			username: user.username,
-			role: rol.name
 		}
 
 		const access_token = this.jwtService.sign(payload)
@@ -115,17 +110,5 @@ export class AuthService {
 
 	async updateToken(updateDto: UpdateTokenDto) {
 		return await this.userService.updateToken(updateDto)
-	}
-
-	async getPermissions(userId: string) {
-		let arr = []
-
-		const permissions = await this.userService.userPermissions(userId)
-
-		for (let i = 0; i < permissions.length; i++) {
-			arr.push(permissions[i].meta_title+"."+permissions[i].name)
-		}
-
-		return arr
 	}
 }

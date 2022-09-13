@@ -9,6 +9,7 @@ import {
 	ParseUUIDPipe,
 	Patch,
 	Post,
+	Put,
 	Req,
 	Res,
 	UseGuards,
@@ -16,12 +17,12 @@ import {
 	ValidationPipe,
 	Version
 } from "@nestjs/common"
-import { ApiBearerAuth, ApiTags } from "@nestjs/swagger"
+import { ApiBearerAuth, ApiQuery, ApiTags } from "@nestjs/swagger"
 import { Request, Response } from "express"
 import { CategoriesService } from "./categories.service"
-import { CreateCategoriesDto } from "./dto/create-categories.dto"
+import { CreateCategoriesDto, STATUS } from "./dto/create-categories.dto"
 import { JwtAuthGuard } from "@common/guard/jwt-auth.guard"
-import { UpdateCategoriesDto } from "./dto/update-categories.dto"
+import { UpdateCategoriesDto, StatusCategoriesDto } from './dto/update-categories.dto';
 
 @Controller("categories")
 @ApiTags("Categories")
@@ -77,7 +78,7 @@ export class CategoriesController {
 		})
 	}
 
-	@Patch(":id")
+	@Put(":id")
 	@Version("1")
 	@HttpCode(HttpStatus.OK)
 	@UsePipes(new ValidationPipe({ transform: true }))
@@ -91,6 +92,24 @@ export class CategoriesController {
 		res.json({
 			statusCode: HttpStatus.OK,
 			message: "category update success",
+			data: category
+		})
+	}
+
+	@Patch(":id/status")
+	@Version("1")
+	@HttpCode(HttpStatus.OK)
+	@ApiQuery({ name: 'status', enum: STATUS})
+	async status(
+		@Param("id", ParseUUIDPipe) id: string,
+		@Body() update: StatusCategoriesDto,
+		@Res() res: Response
+	){
+		const category = await this.categoryService.updateStatus(id, update.status)
+
+		res.json({
+			statusCode: HttpStatus.OK,
+			message: "category update status success",
 			data: category
 		})
 	}

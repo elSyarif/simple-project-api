@@ -1,11 +1,11 @@
 import {
-	AfterInsert,
+	BeforeInsert,
 	Column,
 	CreateDateColumn,
 	Entity,
 	PrimaryGeneratedColumn
 } from "typeorm";
-import slug from "slug"
+import * as slug from 'slug';
 
 @Entity()
 export class Categories {
@@ -50,7 +50,7 @@ export class Categories {
 	})
 	updated_at: Date
 
-	@AfterInsert()
+	@BeforeInsert()
 	assignSlug() {
 		this.slug = slug(this.name)
 	}

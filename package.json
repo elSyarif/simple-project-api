@@ -39,6 +39,7 @@
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.0.1",
     "helmet": "^5.1.0",
+    "ioredis": "^5.2.3",
     "moment": "^2.29.4",
     "mysql2": "^2.3.3",
     "nestjs-i18n": "^9.1.5",

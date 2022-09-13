@@ -4,7 +4,6 @@ export interface IUser {
 	name: string
 	username: string
 	is_active: boolean
-	role: string
 	access_token?: string
 }
 

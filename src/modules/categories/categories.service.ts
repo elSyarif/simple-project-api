@@ -4,6 +4,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import {UpdateCategoriesDto} from "./dto/update-categories.dto"
 import { CreateCategoriesDto } from "./dto/create-categories.dto";
+import * as slug from 'slug';
 
 @Injectable()
 export class CategoriesService{
@@ -39,6 +40,13 @@ export class CategoriesService{
 
         return await this.categoriesRepositor.save(category)
     }
+
+	async updateStatus(id: string, status: string){
+
+		return await this.categoriesRepositor.update(id, {
+			status: status
+		})
+	}
 
     async remove(id: string){
         const category = await this.findOne(id)
