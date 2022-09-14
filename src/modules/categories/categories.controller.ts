@@ -102,10 +102,11 @@ export class CategoriesController {
 	@ApiQuery({ name: 'status', enum: STATUS})
 	async status(
 		@Param("id", ParseUUIDPipe) id: string,
-		@Body() update: StatusCategoriesDto,
+		@Req() req: Request,
 		@Res() res: Response
 	){
-		const category = await this.categoryService.updateStatus(id, update.status)
+		const { status } = req.query
+		const category = await this.categoryService.updateStatus(id, String(status))
 
 		res.json({
 			statusCode: HttpStatus.OK,

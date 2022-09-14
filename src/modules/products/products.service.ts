@@ -9,6 +9,8 @@ import { Users } from '@entities/users.entity';
 import { UpdateProductsDto } from './dto/update-products.dto';
 import { CreateProductVariantDto } from './dto/create-product-variant.dto';
 import { UpdateProductVariantDto } from './dto/update-product-variant.dto';
+import { version } from 'os';
+import { object } from '@ucast/core';
 
 @Injectable()
 export class ProductService{
@@ -22,16 +24,17 @@ export class ProductService{
 		private dataSource : DataSource
     ){}
 
-    async create(createDto: CreateProductsDto){
-		const ds = this.dataSource.createQueryRunner()
+    async create(createDto: CreateProductsDto): Promise<any>{
+		const queryRunner = this.dataSource.createQueryRunner();
 
-		await ds.connect()
-		await ds.startTransaction()
-
+		await queryRunner.connect();
+		await queryRunner.startTransaction();
 		try{
 			// find category
 			const category = await this.dataSource.getRepository(Categories).findOneBy({ id : createDto.category})
+			// find user
 			const user = await this.dataSource.getRepository(Users).findOneBy({ id : createDto.user})
+			const { variant } = createDto
 
 			const product = new Products()
 			product.name = createDto.name
@@ -40,30 +43,50 @@ export class ProductService{
 			product.status =  createDto.status
 			product.user = user.id
 
-			await ds.manager.save(product)
-			await ds.commitTransaction()
+			await queryRunner.manager.save(product)
 
-			await this.dataSource.queryResultCache.remove(["Product:all"])
-			return product
+			if(variant.length >= 1 ){
+				for(let i = 0; i < variant.length; i++){
+					variant[i].product = product.id
+	
+					await queryRunner.manager.save(ProductVariant, variant[i])
+				}
+			}
+
+			await queryRunner.commitTransaction()
+			
+			// await this.dataSource.queryResultCache.remove(["Product:all"])
+
+			return {product, variant}
 		} catch(err) {
-			await ds.rollbackTransaction()
+			await queryRunner.rollbackTransaction()
 			throw new BadRequestException(err.message)
+		} finally{
+			await queryRunner.release()
 		}
 	}
 
     async findAll(){
 
 		return await this.productRepository.find({
-			cache: {
-				id: "Product:all",
-				milliseconds: 600000
+			// cache: {
+			// 	id: "Product:all",
+			// 	milliseconds: 600000
+			// }
+			relations: {
+				variants: true
 			}
 		})
 	}
 
     async findOne(id: string){
-		return await this.productRepository.findOneBy({
-			id: id
+		return await this.productRepository.findOne({
+			where: {
+				id: id
+			},
+			relations: {
+				variants: true
+			}
 		})
 	}
 
@@ -73,7 +96,7 @@ export class ProductService{
 		product.code = updateDto.code
 		product.status = updateDto.status
 
-		await this.dataSource.queryResultCache.remove(["Product:all"])
+		// await this.dataSource.queryResultCache.remove(["Product:all"])
 		return await this.productRepository.save(product)
 	}
 
@@ -90,7 +113,7 @@ export class ProductService{
 	}
 
     // variant product
-    async createVariant(productId : string, variantDto: CreateProductVariantDto){
+    async createVariant(productId : string, variantDto: CreateProductVariantDto[]){
 		const ds = this.dataSource.createQueryRunner()
 
 		await ds.connect()
@@ -100,24 +123,18 @@ export class ProductService{
 			// find category
 			const product = await this.productRepository.findOneBy({id: productId})
 
-			const variant = new ProductVariant()
-			variant.product = product.id
-			variant.sku = variantDto.sku
-			variant.name = variantDto.name
-			variant.model =  variantDto.model
-			variant.price = variantDto.price
-			variant.cost = variantDto.cost
-			variant.stock = variantDto.stock
-			variant.minimum = variantDto.minimum
-			variant.unit = variantDto.unit
-			variant.description = variantDto.description
+			let variant = []
+			for(let i = 0; i < variantDto.length; i++){
+				variantDto[i].product = product.id
+				variant.push(...variant, variantDto[i])
 
-			await ds.manager.save(variant)
+				await ds.manager.save(ProductVariant, variantDto[i])
+			}
 
 			await ds.commitTransaction()
 
-			await this.dataSource.queryResultCache.remove(["Variant:all"])
-			return product
+			// await this.dataSource.queryResultCache.remove(["Variant:all"])
+			return variant
 		} catch(err) {
 			await ds.rollbackTransaction()
 			throw new BadRequestException(err.message)

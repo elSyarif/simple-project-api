@@ -7,14 +7,16 @@ import {
 	ManyToOne,
 	PrimaryGeneratedColumn
 } from "typeorm";
-import { Categories } from "@entities/categories.entity";
+import { Products } from "@entities//products.entity";
 
 @Entity()
 export class ProductVariant {
 	@PrimaryGeneratedColumn("uuid")
 	id: string;
 
-	@ManyToOne(() => Categories)
+	@ManyToOne(() => Products, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn({
 		name: "product_id",
 		referencedColumnName: "id",

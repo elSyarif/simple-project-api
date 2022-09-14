@@ -3,9 +3,11 @@ import {
 	Column,
 	CreateDateColumn,
 	Entity,
+	OneToMany,
 	PrimaryGeneratedColumn
 } from "typeorm";
 import * as slug from 'slug';
+import { Products } from "./products.entity";
 
 @Entity()
 export class Categories {
@@ -49,6 +51,9 @@ export class Categories {
 		onUpdate: "CURRENT_TIMESTAMP(6)"
 	})
 	updated_at: Date
+
+	@OneToMany(()=> Products, (product) => product.category)
+	products: Products[]
 
 	@BeforeInsert()
 	assignSlug() {

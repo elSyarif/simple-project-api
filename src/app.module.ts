@@ -16,7 +16,8 @@ import { CategoriesModule } from "@modules/categories/categories.module"
 		}),
 		TypeOrmModule.forRoot(DatabaseConfig),
 		AuthModule,
-		CategoriesModule
+		CategoriesModule,
+		ProductsModule
 	],
 	providers: [
 		{

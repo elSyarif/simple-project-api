@@ -12,12 +12,12 @@ export const DatabaseConfig: TypeOrmModuleOptions = {
 	entities: [__dirname + "/../*/*.entity.{js,ts}"],
 	logging: false,
 	synchronize: true,
-	cache: {
-		type: 'ioredis',
-		options: {
-			host: process.env.REDIS_HOST,
-			port: process.env.REDIS_PORT
-		},
-		ignoreErrors: true
-	}
+	// cache: {
+	// 	type: 'ioredis',
+	// 	options: {
+	// 		host: process.env.REDIS_HOST,
+	// 		port: process.env.REDIS_PORT
+	// 	},
+	// 	ignoreErrors: true
+	// }
 }

@@ -1,63 +1,173 @@
-import { Controller, Delete, Get, HttpCode, Patch, Post, UseGuards, Version, HttpStatus } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@common/guard/jwt-auth.guard';
+import {
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	Patch,
+	Post,
+	UseGuards,
+	Version,
+	HttpStatus,
+	ParseUUIDPipe,
+	Body,
+	Res,
+	Req,
+	Param,
+	UsePipes,
+	ValidationPipe
+} from "@nestjs/common"
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger"
+import { JwtAuthGuard } from "@common/guard/jwt-auth.guard"
+import { CreateProductsDto } from "./dto/create-products.dto"
+import { Request, Response } from "express"
+import { ProductService } from "./products.service"
+import { UpdateProductsDto } from "./dto/update-products.dto"
+import { CreateProductVariantDto } from "./dto/create-product-variant.dto"
 
-@Controller('products')
+@Controller("products")
 @ApiTags("Products")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 export class ProductsController {
 
-	constructor(){}
+	constructor(
+		private productService: ProductService
+	) {}
 
 	@Post()
 	@Version("1")
 	@HttpCode(HttpStatus.CREATED)
-	async create(){}
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async create(
+		@Body() createDto: CreateProductsDto, 
+		@Req() req: Request,
+		@Res() res: Response
+	) {
+		const user: any = req.user
+		createDto.user = user.id
+		const {product, variant} = await this.productService.create(createDto)
+
+		let result: any
+		result = product
+		result.variant = variant
+
+		res.json({
+			statusCode: HttpStatus.OK,
+			message: "Product create success",
+			data: result,
+		})
+	}
 
 	@Get()
 	@Version("1")
 	@HttpCode(HttpStatus.OK)
-	async findAll(){}
+	async findAll(
+		@Res() res: Response
+	) {
+		const product = await this.productService.findAll()
+
+		res.json({
+			statusCode: HttpStatus.OK,
+			message: "Product find success",
+			data: product
+		})
+	}
 
 	@Get(":id")
 	@Version("1")
 	@HttpCode(HttpStatus.OK)
-	async findOne(){}
+	async findOne(
+		@Param("id", ParseUUIDPipe) id: string,
+		@Res() res: Response
+	) {
+		const product = await this.productService.findOne(id)
+
+		res.json({
+			statusCode: HttpStatus.OK,
+			message: "Product find success",
+			data: product
+		})
+	}
 
 	@Patch(":id")
 	@Version("1")
 	@HttpCode(HttpStatus.OK)
-	async update(){}
+	@UsePipes(new ValidationPipe({ transform: true }))
+	async update(
+		@Param("id", ParseUUIDPipe) id: string,
+		@Body() updateDto: UpdateProductsDto,
+		@Res() res: Response
+	) {
+		const product = await this.productService.update(id, updateDto)
+
+		res.json({
+			statusCode: HttpStatus.OK,
+			message: "Product update success",
+			data: product
+		})
+	}
 
 	@Delete(":id")
 	@Version("1")
 	@HttpCode(HttpStatus.OK)
-	async remove(){}
+	async remove(
+		@Param("id", ParseUUIDPipe) id: string,
+		@Res() res: Response
+	) {
+		const product = await this.productService.remove(id)
 
-	// variant
-	@Post(":productId/variant")
-	@Version("1")
-	@HttpCode(HttpStatus.CREATED)
-	async createVariant(){}
+		res.json({
+			statusCode: HttpStatus.OK,
+			message: "Product delete success",
+			data: product
+		})
+	}
 
-	@Get("")
-	@Version("1")
-	@HttpCode(HttpStatus.OK)
-	async findAllVariant(){}
+	// // variant
+	// @Post(":productId/variant")
+	// @Version("1")
+	// @HttpCode(HttpStatus.CREATED)
+	// async createVariant(
+	// 	@Param("productId", ParseUUIDPipe) productId: string,
+	// 	@Body() variantDto: CreateProductVariantDto[],
+	// 	@Res() res: Response
+	// ) {
+	// 	const variant = await this.productService.createVariant(productId, variantDto)
 
-	@Get(":productId/variant/:id")
-	@Version("1")
-	@HttpCode(HttpStatus.OK)
-	async findOneVariant(){}
+	// 	res.json({
+	// 		statusCode: HttpStatus.OK,
+	// 		message: "Product variant create success",
+	// 		data: variant
+	// 	})
+	// }
 
-	@Patch(":id")
-	@Version("1")
-	@HttpCode(HttpStatus.OK)
-	async updateVariant(){}
+	// @Get("/variants")
+	// @Version("1")
+	// @HttpCode(HttpStatus.OK)
+	// async findAllVariant(
+	// 	@Res() res: Response
+	// ) {
+	// 	const variant = await this.productService.findAllVariant()
 
-	@Delete(":id")
-	@Version("1")
-	@HttpCode(HttpStatus.OK)
-	async removeVariant(){}
+	// 	res.json({
+	// 		statusCode: HttpStatus.OK,
+	// 		message: "Product variant create success",
+	// 		data: variant
+	// 	})
+	// }
+
+	// @Get(":productId/variant/:id")
+	// @Version("1")
+	// @HttpCode(HttpStatus.OK)
+	// async findOneVariant() {}
+
+	// @Patch(":id")
+	// @Version("1")
+	// @HttpCode(HttpStatus.OK)
+	// async updateVariant() {}
+
+	// @Delete(":id")
+	// @Version("1")
+	// @HttpCode(HttpStatus.OK)
+	// async removeVariant() {}
 }
