@@ -25,6 +25,7 @@ export class UsersService {
 		@InjectRepository(UsersTokens)
 		private tokenRepository: Repository<UsersTokens>,
 		@InjectRepository(UsersGroup)
+		private groupRepository: Repository<UsersGroup>,
 		private dataSource: DataSource
 	) {}
 
