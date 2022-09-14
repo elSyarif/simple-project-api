@@ -91,7 +91,6 @@ export class ProductService{
 				milliseconds: 600000
 			}
 		})
-		console.log("first", product)
 		if(!product){
 			throw new NotFoundException('Product not found')
 		}

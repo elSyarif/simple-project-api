@@ -46,7 +46,7 @@ export class ProductsVariantController {
 		const variant = await this.productService.createVariant(productId, variantDto.variant)
 
 		res.json({
-			statusCode: HttpStatus.OK,
+			statusCode: HttpStatus.CREATED,
 			message: "Product variant create success",
 			data: variant
 		})

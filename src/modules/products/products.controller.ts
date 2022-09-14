@@ -52,7 +52,7 @@ export class ProductsController {
 		result.variant = variant
 
 		res.json({
-			statusCode: HttpStatus.OK,
+			statusCode: HttpStatus.CREATED,
 			message: "Product create success",
 			data: result,
 		})
