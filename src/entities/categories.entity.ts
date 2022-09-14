@@ -1,5 +1,6 @@
 import {
 	BeforeInsert,
+	BeforeUpdate,
 	Column,
 	CreateDateColumn,
 	Entity,
@@ -56,6 +57,7 @@ export class Categories {
 	products: Products[]
 
 	@BeforeInsert()
+	@BeforeUpdate()
 	assignSlug() {
 		this.slug = slug(this.name)
 	}
