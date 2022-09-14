@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 import { Products } from "@entities/products.entity";
@@ -9,8 +9,7 @@ import { Users } from '@entities/users.entity';
 import { UpdateProductsDto } from './dto/update-products.dto';
 import { CreateProductVariantDto } from './dto/create-product-variant.dto';
 import { UpdateProductVariantDto } from './dto/update-product-variant.dto';
-import { version } from 'os';
-import { object } from '@ucast/core';
+import * as slug from 'slug';
 
 @Injectable()
 export class ProductService{
@@ -38,6 +37,7 @@ export class ProductService{
 
 			const product = new Products()
 			product.name = createDto.name
+			product.slug = slug(createDto.name)
 			product.code = createDto.code
 			product.category = category.id
 			product.status =  createDto.status
@@ -48,14 +48,14 @@ export class ProductService{
 			if(variant.length >= 1 ){
 				for(let i = 0; i < variant.length; i++){
 					variant[i].product = product.id
-	
+
 					await queryRunner.manager.save(ProductVariant, variant[i])
 				}
 			}
 
 			await queryRunner.commitTransaction()
-			
-			// await this.dataSource.queryResultCache.remove(["Product:all"])
+
+			await this.dataSource.queryResultCache.remove(["Product:all"])
 
 			return {product, variant}
 		} catch(err) {
@@ -67,22 +67,10 @@ export class ProductService{
 	}
 
     async findAll(){
-
 		return await this.productRepository.find({
-			// cache: {
-			// 	id: "Product:all",
-			// 	milliseconds: 600000
-			// }
-			relations: {
-				variants: true
-			}
-		})
-	}
-
-    async findOne(id: string){
-		return await this.productRepository.findOne({
-			where: {
-				id: id
+			cache: {
+				id: "Product:all",
+				milliseconds: 600000
 			},
 			relations: {
 				variants: true
@@ -90,24 +78,84 @@ export class ProductService{
 		})
 	}
 
-    async update(id: string, updateDto: UpdateProductsDto){
-		const product = await this.findOne(id)
-		product.name = updateDto.name
-		product.code = updateDto.code
-		product.status = updateDto.status
+    async findOne(id: string){
+		const product =  await this.productRepository.findOne({
+			where: {
+				id: id
+			},
+			relations: {
+				variants: true
+			},
+			cache: {
+				id: "Product:one",
+				milliseconds: 600000
+			}
+		})
+		console.log("first", product)
+		if(!product){
+			throw new NotFoundException('Product not found')
+		}
 
-		// await this.dataSource.queryResultCache.remove(["Product:all"])
-		return await this.productRepository.save(product)
+		return product
+	}
+
+    async update(id: string, updateDto: UpdateProductsDto): Promise<any>{
+		const queryRunner = this.dataSource.createQueryRunner();
+
+		await queryRunner.connect();
+		await queryRunner.startTransaction();
+
+		try {
+			const { variant } = updateDto
+
+			const product = await this.productRepository.findOneBy({id: id})
+			product.name = updateDto.name
+			product.code = updateDto.code
+			product.status = updateDto.status
+
+			await queryRunner.manager.save(product)
+
+			if(variant.length >= 1 ){
+				for(let i = 0; i < variant.length; i++){
+					const pvariant = await this.variantRepository.findOneBy({id: variant[i].id})
+					pvariant.name 	 =  variant[i].name
+					pvariant.sku  	 =  variant[i].sku
+					pvariant.model 	 =  variant[i].model
+					pvariant.price 	 =  variant[i].price
+					pvariant.cost 	 =  variant[i].cost
+					pvariant.minimum =  variant[i].minimum
+					pvariant.stock 	 =  variant[i].stock
+					pvariant.unit 	 =  variant[i].unit
+					pvariant.description 	 =  variant[i].description
+
+					await queryRunner.manager.save(ProductVariant, pvariant)
+				}
+			}
+
+			await this.dataSource.queryResultCache.remove(["Product:all"])
+			await this.dataSource.queryResultCache.remove(["Product:one"])
+
+			await queryRunner.commitTransaction()
+			return {product, variant}
+
+		} catch (error) {
+			await queryRunner.rollbackTransaction()
+			throw new BadRequestException(error.message)
+		}finally{
+			await queryRunner.release()
+		}
 	}
 
     async updateStatus(id: string, parms: object){
 		await this.dataSource.queryResultCache.remove(["Product:all"])
+		await this.dataSource.queryResultCache.remove(["Product:one"])
 		return await this.productRepository.update(id, parms)
 	}
 
     async remove(id: string){
 		const product = await this.findOne(id)
 		await this.dataSource.queryResultCache.remove(["Product:all"])
+		await this.dataSource.queryResultCache.remove(["Product:one"])
 
 		return await this.productRepository.remove(product)
 	}
@@ -133,7 +181,8 @@ export class ProductService{
 
 			await ds.commitTransaction()
 
-			// await this.dataSource.queryResultCache.remove(["Variant:all"])
+			await this.dataSource.queryResultCache.remove(["Product:all"])
+			await this.dataSource.queryResultCache.remove(["Variant:all"])
 			return variant
 		} catch(err) {
 			await ds.rollbackTransaction()
@@ -167,12 +216,19 @@ export class ProductService{
 		variant.unit = variantDto.unit
 		variant.description = variantDto.description
 
+		await this.dataSource.queryResultCache.remove(["Product:all"])
 		await this.dataSource.queryResultCache.remove(["Variant:all"])
 		return await this.variantRepository.save(variant)
 	}
 
 	async removeVariant(variantId: string){
 		const variant = await this.variantRepository.findOneBy({id: variantId})
+
+		if(!variant){
+			throw new NotFoundException('Product variant not found')
+		}
+
+		await this.dataSource.queryResultCache.remove(["Product:all"])
 		await this.dataSource.queryResultCache.remove(["Variant:all"])
 
 		return await this.variantRepository.remove(variant)

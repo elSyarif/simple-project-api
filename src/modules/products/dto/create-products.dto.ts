@@ -6,18 +6,18 @@ export class CreateProductsDto{
     @ApiProperty()
     @IsNotEmpty()
     category: string
-    
+
     @ApiProperty()
     @IsNotEmpty()
     code: string
-    
+
     @ApiProperty()
     @IsNotEmpty()
     name: string
 
-    @ApiProperty()
+    @ApiProperty({ enum: ['PUBLISH', 'DRAFT']})
     @IsNotEmpty()
-    status: string
+    status: STATUS
 
     user?: string
 
@@ -28,6 +28,7 @@ export class CreateProductsDto{
 }
 
 interface Variant{
+	id?: string
     product?: string
     sku: string,
     name: string,
@@ -38,4 +39,9 @@ interface Variant{
     minimum: number
     unit: string
     description?: string
+}
+
+export enum STATUS{
+	PUBLISH = 'PUBLISH',
+	DRAFT = 'DRAFT'
 }

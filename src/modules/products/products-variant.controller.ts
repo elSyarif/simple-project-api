@@ -20,7 +20,7 @@ import { ApiBearerAuth, ApiTags } from "@nestjs/swagger"
 import { JwtAuthGuard } from "@common/guard/jwt-auth.guard"
 import { Request, Response } from "express"
 import { ProductService } from "./products.service"
-import { CreateProductVariantDto } from "./dto/create-product-variant.dto"
+import { CreateProductVariantDto, ProductVariantDto } from './dto/create-product-variant.dto';
 import { UpdateProductVariantDto } from "./dto/update-product-variant.dto"
 
 @Controller("product-variants")
@@ -34,16 +34,16 @@ export class ProductsVariantController {
 	) {}
 
 	// variant
-	@Post(":productId/variant")
+	@Post(":productId")
 	@Version("1")
 	@HttpCode(HttpStatus.CREATED)
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async createVariant(
 		@Param("productId", ParseUUIDPipe) productId: string,
-		@Body() variantDto: CreateProductVariantDto[],
+		@Body() variantDto: ProductVariantDto,
 		@Res() res: Response
 	) {
-		const variant = await this.productService.createVariant(productId, variantDto)
+		const variant = await this.productService.createVariant(productId, variantDto.variant)
 
 		res.json({
 			statusCode: HttpStatus.OK,
@@ -52,7 +52,7 @@ export class ProductsVariantController {
 		})
 	}
 
-	@Get("")
+	@Get()
 	@Version("1")
 	@HttpCode(HttpStatus.OK)
 	async findAllVariant(
@@ -71,11 +71,10 @@ export class ProductsVariantController {
 	@Version("1")
 	@HttpCode(HttpStatus.OK)
 	async findOneVariant(
-		@Param("productId", ParseUUIDPipe) productId: string,
 		@Param("id", ParseUUIDPipe) id: string,
 		@Res() res: Response
 	) {
-		const variant = await this.productService.findOne(id)
+		const variant = await this.productService.findOneVariant(id)
 
 		res.json({
 			statusCode: HttpStatus.OK,
@@ -114,7 +113,7 @@ export class ProductsVariantController {
 		res.json({
 			statusCode: HttpStatus.OK,
 			message: "Product variant delete success",
-			data: variant
+			data: null
 		})
 	}
 }

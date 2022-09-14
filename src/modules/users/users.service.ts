@@ -13,11 +13,7 @@ import { UpdateUsersDto } from "@modules/users/dto/update-users.dto"
 import { CreateTokenDto } from "@modules/users/dto/create-token.dto"
 import { UsersTokens } from "@entities/users-tokens.entity"
 import { UpdateTokenDto } from "@modules/users/dto/update-token.dto"
-import { validateUserDto } from "@modules/users/dto/validate-user.dto"
-import { AssignMenuDto } from "@modules/users/dto/assign-menus.dto"
-import { AssignPermissionDto } from "@modules/users/dto/assign-permission.dto"
 import { UsersGroup } from "@entities/users_group.entity"
-import { CreateUserGroupDto } from "@modules/users/dto/create-usergroups.dto"
 
 @Injectable()
 export class UsersService {
@@ -29,7 +25,6 @@ export class UsersService {
 		@InjectRepository(UsersTokens)
 		private tokenRepository: Repository<UsersTokens>,
 		@InjectRepository(UsersGroup)
-		private groupRepository: Repository<UsersGroup>,
 		private dataSource: DataSource
 	) {}
 

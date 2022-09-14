@@ -39,7 +39,7 @@ export class ProductsController {
 	@HttpCode(HttpStatus.CREATED)
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
-		@Body() createDto: CreateProductsDto, 
+		@Body() createDto: CreateProductsDto,
 		@Req() req: Request,
 		@Res() res: Response
 	) {
@@ -98,12 +98,16 @@ export class ProductsController {
 		@Body() updateDto: UpdateProductsDto,
 		@Res() res: Response
 	) {
-		const product = await this.productService.update(id, updateDto)
+		const {product, variant} = await this.productService.update(id, updateDto)
+
+		let result: any
+		result = product
+		result.variant = variant
 
 		res.json({
 			statusCode: HttpStatus.OK,
 			message: "Product update success",
-			data: product
+			data: result
 		})
 	}
 
@@ -114,60 +118,12 @@ export class ProductsController {
 		@Param("id", ParseUUIDPipe) id: string,
 		@Res() res: Response
 	) {
-		const product = await this.productService.remove(id)
+		await this.productService.remove(id)
 
 		res.json({
 			statusCode: HttpStatus.OK,
 			message: "Product delete success",
-			data: product
+			data: null
 		})
 	}
-
-	// // variant
-	// @Post(":productId/variant")
-	// @Version("1")
-	// @HttpCode(HttpStatus.CREATED)
-	// async createVariant(
-	// 	@Param("productId", ParseUUIDPipe) productId: string,
-	// 	@Body() variantDto: CreateProductVariantDto[],
-	// 	@Res() res: Response
-	// ) {
-	// 	const variant = await this.productService.createVariant(productId, variantDto)
-
-	// 	res.json({
-	// 		statusCode: HttpStatus.OK,
-	// 		message: "Product variant create success",
-	// 		data: variant
-	// 	})
-	// }
-
-	// @Get("/variants")
-	// @Version("1")
-	// @HttpCode(HttpStatus.OK)
-	// async findAllVariant(
-	// 	@Res() res: Response
-	// ) {
-	// 	const variant = await this.productService.findAllVariant()
-
-	// 	res.json({
-	// 		statusCode: HttpStatus.OK,
-	// 		message: "Product variant create success",
-	// 		data: variant
-	// 	})
-	// }
-
-	// @Get(":productId/variant/:id")
-	// @Version("1")
-	// @HttpCode(HttpStatus.OK)
-	// async findOneVariant() {}
-
-	// @Patch(":id")
-	// @Version("1")
-	// @HttpCode(HttpStatus.OK)
-	// async updateVariant() {}
-
-	// @Delete(":id")
-	// @Version("1")
-	// @HttpCode(HttpStatus.OK)
-	// async removeVariant() {}
 }

@@ -1,5 +1,5 @@
 import { Categories } from "@entities/categories.entity";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import {UpdateCategoriesDto} from "./dto/update-categories.dto"
@@ -14,16 +14,25 @@ export class CategoriesService{
     ){}
 
     async create(createDto: CreateCategoriesDto){
-        const category = new Categories()
-        category.name = createDto.name
-        category.status = createDto.status
-        category.description = createDto.description
+		try {
+			const category = new Categories()
+			category.name = createDto.name
+			category.status = createDto.status
+			category.description = createDto.description
 
-        return await this.categoriesRepositor.save(category)
+			return await this.categoriesRepositor.save(category)
+
+		} catch (error) {
+			throw new BadRequestException(error.message)
+		}
     }
 
     async findAll(){
-        return await this.categoriesRepositor.find()
+        return await this.categoriesRepositor.find({
+			where: {
+				status: "PUBLISH"
+			}
+		})
     }
 
     async findOne(id: string){

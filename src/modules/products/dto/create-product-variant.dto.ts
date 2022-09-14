@@ -33,7 +33,7 @@ export class CreateProductVariantDto{
 
 export class ProductVariantDto{
     @ApiProperty({
-        type: CreateProductVariantDto
+        type: [CreateProductVariantDto]
     })
     variant: Variant[]
 }
